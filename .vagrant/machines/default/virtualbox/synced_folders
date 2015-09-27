@@ -1,0 +1,1 @@
+{"virtualbox":{"/home/vagrant/src":{"mount_options":["dmode=777"],"create":true,"guestpath":"/home/vagrant/src","hostpath":"/Users/sean_eshbaugh/sandbox/os/src","disabled":false},"/vagrant":{"guestpath":"/vagrant","hostpath":"/Users/sean_eshbaugh/sandbox/os","disabled":false}}}
