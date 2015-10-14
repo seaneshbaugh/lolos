@@ -10,6 +10,8 @@
 #error "This needs to be compiled with a ix86-elf compiler."
 #endif
 
+uint32_t real_rand(uint32_t max);
+
 static const size_t VGA_WIDTH = 80;
 static const size_t VGA_HEIGHT = 25;
 
@@ -109,19 +111,62 @@ void terminal_write_string(struct terminal* t, const char* string) {
   }
 }
 
+void terminal_scroll(struct terminal* t, size_t numberOfLines) {
+  if (numberOfLines > VGA_HEIGHT) {
+    numberOfLines = VGA_HEIGHT;
+  }
+
+  if (numberOfLines > 0) {
+    for (size_t y = VGA_HEIGHT - (VGA_HEIGHT - numberOfLines); y < VGA_HEIGHT; y += 1) {
+      for (size_t x = 0; x < VGA_WIDTH; x += 1) {
+        const size_t originalIndex = y * VGA_WIDTH + x;
+
+        const size_t newIndex = (y - numberOfLines) * VGA_WIDTH + x;
+
+        t->buffer[newIndex] = t->buffer[originalIndex];
+      }
+    }
+
+    for (size_t y = VGA_HEIGHT - numberOfLines; y < VGA_HEIGHT; y += 1) {
+      for (size_t x = 0; x < VGA_WIDTH; x += 1) {
+        t->color = make_color(COLOR_LIGHT_GREY, COLOR_BLACK);
+
+        const size_t index = y * VGA_WIDTH + x;
+
+        t->buffer[index] = make_vga_entry(' ', t->color);
+      }
+    }
+  }
+}
+
 void kernel_main() {
   struct terminal t;
 
   terminal_initialize(&t);
 
+  /* while(true) { */
+
+  /* } */
+
+
+
   for (uint32_t i = 0; i < VGA_HEIGHT * VGA_WIDTH; i++) {
-      terminal_set_color(&t, make_color(i % 16, i % 16 + 8));
+    enum vga_color fg = real_rand(16);
 
-      if (i % 2 == 0) {
-        terminal_put_char(&t, 'L');
-      } else {
-        terminal_put_char(&t, 'O');
+    enum vga_color bg = real_rand(16);
 
-      }
+    /* while (fg != bg) { */
+    /*   bg = real_rand(16); */
+    /* } */
+
+    terminal_set_color(&t, make_color(fg, bg));
+
+    if (i % 2 == 0) {
+      terminal_put_char(&t, 'L');
+    } else {
+      terminal_put_char(&t, 'O');
+    }
   }
+
+  //  terminal_scroll(&t, 3);
 }

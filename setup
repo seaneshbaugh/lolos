@@ -1,0 +1,137 @@
+#!/bin/bash
+
+log() {
+    echo "[$(date +'%Y-%m-%dT%H:%M:%S%z')] $1: $2" >&$3
+}
+
+debug() {
+    log "Debug" "$@" 1
+}
+
+info() {
+    log "Info" "$@" 1
+}
+
+warning() {
+    log "Warning" "$@" 2
+}
+
+error() {
+    log "Error" "$@" 2
+
+    exit 1
+}
+
+download_archive() {
+    echo "Downloading $1"
+
+    `curl -s -f $1 -o $2` || error "Failed to download $1!"
+}
+
+verify_checksum() {
+    echo "Verifying checksum for $1"
+
+    ACTUAL_CHECKSUM=`shasum -a 512 $1 | awk '{ print $1 }'`
+
+    if [ $ACTUAL_CHECKSUM != $2 ]
+    then
+        error "$1 checksum is invalid!"
+    fi
+}
+
+COMPILER_SRC_DIR="compiler-src"
+
+mkdir -p "$COMPILER_SRC_DIR"
+
+BINUTILS_VERSION="2.25.1"
+GCC_VERSION="5.2.0"
+GMP_VERSION="6.0.0a"
+MPFR_VERSION="3.1.3"
+ISL_VERSION="0.14"
+CLOOG_VERSION="0.18.4"
+MPC_VERSION="1.0.3"
+LIBICONV_VERSION="1.14"
+
+BINUTILS_ARCHIVE_NAME="binutils-$BINUTILS_VERSION.tar.gz"
+GCC_ARCHIVE_NAME="gcc-$GCC_VERSION.tar.gz"
+GMP_ARCHIVE_NAME="gmp-$GMP_VERSION.tar.lz"
+MPFR_ARCHIVE_NAME="mpfr-$MPFR_VERSION.tar.gz"
+ISL_ARCHIVE_NAME="isl-$ISL_VERSION.tar.gz"
+CLOOG_ARCHIVE_NAME="cloog-$CLOOG_VERSION.tar.gz"
+MPC_ARCHIVE_NAME="mpc-$MPC_VERSION.tar.gz"
+LIBICONV_ARCHIVE_NAME="libiconv-$LIBICONV_VERSION.tar.gz"
+
+BINUTILS_CHECKSUM="af9fced0813551ea9196f1be3a9b4f7f70fc02aa369e042fa1077878c42bb3a8bc17defc4db5d75dac42c81fb53b5015db9d89d92ef6dc9363798a3c94323aba"
+GCC_CHECKSUM="d2cf088c08754af0f06cd36cef83544a05bf75c2fa5d9486eec4babece8b32258449f04bcb6506bf3ea6681948574ba56812bc9881497ba0f5460f8358e8fce5"
+GMP_CHECKSUM="82abba65909a19d63035771a4321dce9166a01e93b76f8474235393ba0a7fd31e11c43c4725f8a5ae598c07a5afaa3466bc7266ae2fd06d39e22bb46babd6d81"
+MPFR_CHECKSUM="6f0fe2821bef83ec32a4ab78def92a95f8b967e36a6475d776986ac157c5c9998eef1169d5ddfc14df418015af750a2be24350c5ca3bfef728ae4e206af68472"
+ISL_CHECKSUM="ec7a8a589d3dd925915202f0a80885bc40f38b1ccc1f47deec6712887ce9c4365ad892206bcc9dee801d863d13e21651caa8a19c37911d35548685e2b05d03e3"
+CLOOG_CHECKSUM="d35d67b08ffe13c1a010b65bfe4dd02b0ae013d5b489e330dc950bd3514defca8f734bd37781856dcedf0491ff6122c34eecb4b0fe32a22d7e6bdadea98c8c23"
+MPC_CHECKSUM="0028b76df130720c1fad7de937a0d041224806ce5ef76589f19c7b49d956071a683e2f20d154c192a231e69756b19e48208f2889b0c13950ceb7b3cfaf059a43"
+LIBICONV_CHECKSUM="b96774fefc4fa1d07948fcc667027701373c34ebf9c4101000428e048addd85a5bb5e05e59f80eb783a3054a3a8a3c0da909450053275bbbf3ffde511eb3f387"
+
+BINUTILS_BASE_URL="http://ftp.gnu.org/gnu/binutils/"
+GCC_BASE_URL="http://www.netgull.com/gcc/releases/gcc-5.2.0/"
+GMP_BASE_URL="https://gmplib.org/download/gmp/"
+MPFR_BASE_URL="http://www.mpfr.org/mpfr-current/"
+ISL_BASE_URL="http://isl.gforge.inria.fr/"
+CLOOG_BASE_URL="http://www.bastoul.net/cloog/pages/download/"
+MPC_BASE_URL="http://ftp.gnu.org/gnu/mpc/"
+LIBICONV_BASE_URL="http://ftp.gnu.org/pub/gnu/libiconv/"
+
+DEPENDENCIES=( "BINUTILS" "GCC" "GMP" "MPFR" "ISL" "CLOOG" "MPC" "LIBICONV" )
+
+for DEPENDENCY in "${DEPENDENCIES[@]}"
+do
+    DEPENDENCY_ARCHIVE_NAME=${DEPENDENCY}_ARCHIVE_NAME
+
+    DEPENDENCY_CHECKSUM=${DEPENDENCY}_CHECKSUM
+
+    DEPENDENCY_BASE_URL=${DEPENDENCY}_BASE_URL
+
+    if [ ! -f "$COMPILER_SRC_DIR/${!DEPENDENCY_ARCHIVE_NAME}" ]
+    then
+        download_archive "${!DEPENDENCY_BASE_URL}/${!DEPENDENCY_ARCHIVE_NAME}" "$COMPILER_SRC_DIR/${!DEPENDENCY_ARCHIVE_NAME}"
+    fi
+
+    verify_checksum "$COMPILER_SRC_DIR/${!DEPENDENCY_ARCHIVE_NAME}" "${!DEPENDENCY_CHECKSUM}"
+
+    if [[ "${!DEPENDENCY_ARCHIVE_NAME}" == *tar.gz ]]
+    then
+        DEPENDENCY_SRC_DIR_NAME=`echo ${!DEPENDENCY_ARCHIVE_NAME} | sed 's/.tar.gz$//'`
+
+        `rm -rf $COMPILER_SRC_DIR/$DEPENDENCY_SRC_DIR_NAME`
+
+        `tar -xzf $COMPILER_SRC_DIR/${!DEPENDENCY_ARCHIVE_NAME} -C $COMPILER_SRC_DIR`
+    fi
+
+    if [[ "${!DEPENDENCY_ARCHIVE_NAME}" == *tar.lz ]]
+    then
+        DEPENDENCY_SRC_TAR_NAME=`echo ${!DEPENDENCY_ARCHIVE_NAME} | sed 's/.lz$//'`
+
+        DEPENDENCY_SRC_DIR_NAME=`echo ${!DEPENDENCY_ARCHIVE_NAME} | sed 's/.tar.lz$//'`
+
+        `rm -rf $COMPILER_SRC_DIR/$DEPENDENCY_SRC_TAR_NAME`
+
+        `rm -rf $COMPILER_SRC_DIR/$DEPENDENCY_SRC_DIR_NAME`
+
+        PWD=`pwd`
+
+        `cd $COMPILER_SRC_DIR && lzip -d -k ${!DEPENDENCY_ARCHIVE_NAME} && tar -xf $DEPENDENCY_SRC_TAR_NAME`
+
+        `cd $PWD`
+    fi
+done
+
+export PREFIX="$HOME/opt/gcc-$GCC_VERSION"
+
+export TARGET=i686-elf
+
+export PATH="$PREFIX/bin:$PATH"
+
+# Build binutils
+cp -r $COMPILER_SRC_DIR/isl-$ISL_VERSION $COMPILER_SRC_DIR/binutils-$BINUTILS_VERSION/isl
+
+cp -r $COMPILER_SRC_DIR/cloog-$ISL_VERSION $COMPILER_SRC_DIR/binutils-$BINUTILS_VERSION/cloog
+
+mkdir -p build-binutils

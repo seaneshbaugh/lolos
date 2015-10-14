@@ -27,4 +27,4 @@ copy:
 	cp os.bin iso/boot
 
 clean:
-	rm boot.o kernel.o os.bin
+	rm -rf boot.o kernel.o os.bin
