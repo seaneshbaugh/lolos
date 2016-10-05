@@ -1,4 +1,7 @@
 *.o
 *.bin
 *.iso
-/build*
+/.vagrant
+/build
+/compiler-src
+/compiler-build
