@@ -3,5 +3,5 @@
 *.iso
 /.vagrant
 /build
-/compiler-src
-/compiler-build
+/cross-compiler/compiler-src/*
+/cross-compiler/compiler-build/*

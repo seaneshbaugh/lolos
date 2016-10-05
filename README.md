@@ -105,3 +105,15 @@ First download and install [Vagrant](https://www.vagrantup.com/downloads.html).
 2. Set the optical drive storage to point to the ISO file.
 3. Set the boot order so the optical disk is first.
 4. Start the VM and then select "\*os" in the GRUB boot menu.
+
+## Helpful Links
+
+* [GNU Binutils](https://www.gnu.org/software/binutils/)
+* [GCC, the GNU Compiler Collection](https://www.gnu.org/software/gcc/)
+* [The GNU Multiple Precision Arithmetic Library](https://gmplib.org/)
+* [The GNU MPFR Library](http://www.mpfr.org/)
+* [Integer Set Library](http://isl.gforge.inria.fr/)
+* [CLooG](http://www.cloog.org/)
+* [GNU MPC](http://multiprecision.org/)
+* [Texinfo - The GNU Documentation System](https://www.gnu.org/software/texinfo/)
+* [How to Build a GCC Cross-Compiler](http://preshing.com/20141119/how-to-build-a-gcc-cross-compiler/)
